@@ -1,0 +1,53 @@
+- name: Pull SSH public keys from GIT
+  local_action:
+    module: git
+    repo: "{{ sshkey_repo_git }}"
+    dest: "{{ sshkey_repo }}"
+    clone: true
+    update: true
+  become: no
+  run_once: true
+  when: sshkey_repo_git is defined
+  tags:
+    - users
+    - sshkeys
+
+- debug: msg={{ sshkey_repo }}
+
+- name: Filter absent users
+  set_fact:
+    users: "{{ users | selectattr('state', 'undefined') | list + users | selectattr('state', 'defined') | selectattr('state', 'equalto', 'present') | list }}"
+  tags:
+    - users
+    - sshkeys
+
+- name: "Authorized keys for users"
+  authorized_key:
+    user: "{{ item.name }}"
+    key: "{% for key in query('fileglob', '{{ sshkey_repo }}/{{ item.name }}/*.pub') %}{{ lookup('file', key) ~ '\n'}}{% endfor %}"
+    exclusive: "{{ sshkey_exclusive }}" # TODO: per user basis?
+  with_items: "{{ users }}"
+  tags:
+    - users
+    - sshkeys
+
+- set_fact:
+    root_ssh_keys: "{% for key in root_ssh_keys | default([]) %}{{ key }}\n{% endfor %}"
+
+- name: "Authorized keys for root (1/2): build list of allowed keys"
+  set_fact:
+    root_ssh_keys: "{{ root_ssh_keys | default('') }}{% for key in query('fileglob', '{{ sshkey_repo }}/{{ item.name }}/*.pub') %}{{ lookup('file', key) ~ \"\n\"}}{% endfor %}"
+  with_items: "{{ users | selectattr('root_ssh_keys', 'defined') | selectattr('root_ssh_keys', 'equalto', True) | list }}"
+  tags:
+    - users
+    - sshkeys
+
+- name: "Authorized keys for root (2/2): write authorized_keys file"
+  authorized_key:
+    user: "root"
+    key: "{{ root_ssh_keys }}"
+    exclusive: "{{ sshkey_exclusive }}" # TODO: per user basis?
+  when: root_ssh_keys is defined and root_ssh_keys != ""
+  tags:
+    - users
+    - sshkeys

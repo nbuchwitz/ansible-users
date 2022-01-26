@@ -1,0 +1,17 @@
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Configure users
+  user:
+    name: "{{ item.name }}"
+    state:  "{{ item.state | default('present') }}"
+    groups: "{{ extra_groups|default([]) + item.extra_groups | default([]) + [sudo_group] if item.sudo | default(True) else [] }}" 
+    shell: "{{ user_shell }}"
+  with_items: "{{ users }}"
+  # don't try to remove current ansible user - this will raise an error
+  when: not (ansible_user_id == item.name and item.state | default('present') == 'absent')
+  tags:
+    - users
+
+- include_tasks: "sudo.yml"
+- include_tasks: "sshkeys.yml"

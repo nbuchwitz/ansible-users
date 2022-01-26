@@ -1,0 +1,19 @@
+- name: Ensure that sudo is installed (Debian)
+  apt:
+    name: sudo
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Ensure that sudo is installed (RedHat)
+  yum:
+    name: sudo
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Allow {{ sudo_group }} group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%{{ sudo_group }}'
+    line: '%{{ sudo_group }} ALL=(ALL) NOPASSWD: ALL'
+    validate: '/usr/sbin/visudo -cf %s'
