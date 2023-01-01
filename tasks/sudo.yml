@@ -1,17 +1,10 @@
-- name: Ensure that sudo is installed (Debian)
-  apt:
+- name: Ensure that sudo is installed
+  ansible.builtin.package:
     name: sudo
     state: present
-  when: ansible_os_family == 'Debian'
 
-- name: Ensure that sudo is installed (RedHat)
-  yum:
-    name: sudo
-    state: present
-  when: ansible_os_family == 'RedHat'
-
-- name: Allow {{ sudo_group }} group to have passwordless sudo
-  lineinfile:
+- name: "Allow group to have passwordless sudo: {{ sudo_group }}"
+  ansible.builtin.lineinfile:
     dest: /etc/sudoers
     state: present
     regexp: '^%{{ sudo_group }}'

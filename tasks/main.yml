@@ -1,11 +1,11 @@
 - name: Include OS-specific variables.
-  include_vars: "{{ ansible_os_family }}.yml"
+  ansible.builtin.include_vars: "{{ ansible_os_family }}.yml"
 
-- name: Configure users
-  user:
+- name: Configure users # noqa: args[module]
+  ansible.builtin.user:
     name: "{{ item.name }}"
-    state:  "{{ item.state | default('present') }}"
-    groups: "{{ extra_groups|default([]) + item.extra_groups | default([]) + [sudo_group] if item.sudo | default(True) else [] }}" 
+    state: "{{ item.state | default('present') }}"
+    groups: "{{ extra_groups | default([]) + item.extra_groups | default([]) + [sudo_group] if item.sudo | default(True) else [] }}"
     shell: "{{ user_shell }}"
   with_items: "{{ users }}"
   # don't try to remove current ansible user - this will raise an error
@@ -13,5 +13,8 @@
   tags:
     - users
 
-- include_tasks: "sudo.yml"
-- include_tasks: "sshkeys.yml"
+- name: Sudo
+  ansible.builtin.include_tasks: "sudo.yml"
+
+- name: Sshkeys
+  ansible.builtin.include_tasks: "sshkeys.yml"
