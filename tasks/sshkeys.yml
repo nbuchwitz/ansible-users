@@ -50,7 +50,7 @@
     user: "root"
     key: "{{ root_ssh_keys }}"
     exclusive: "{{ sshkey_exclusive }}" # TODO: per user basis?
-  when: root_ssh_keys is defined and root_ssh_keys != ""
+  when: root_ssh_keys is defined and root_ssh_keys != None
   tags:
     - users
     - sshkeys
