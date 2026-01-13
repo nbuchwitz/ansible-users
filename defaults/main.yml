@@ -2,6 +2,8 @@ sshkey_repo: "./ssh-keys"
 
 # Exclusive sshkey distribution (eg. remove all others)
 sshkey_exclusive: true
+root_sshkey_exclusive: true
 
 user_shell: '/bin/bash'
 users: []
+users_exlude: []
